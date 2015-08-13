@@ -12,14 +12,15 @@
 #include <stdlib.h>
 #include <assert.h>
 
-#define HEADER_SIZE    sizeof(struct free_list_header)  
-#define MAGIC_FREE     0xDEADBEEF
-#define MAGIC_ALLOC    0xBEEFDEAD
+#define HEADER_SIZE    sizeof(struct free_list_header)
+#define MAGIC_FREE     0xDEADBEEF // Marks free blocks
+#define MAGIC_ALLOC    0xBEEFDEAD // Marks allocated blocks
 
 typedef unsigned char byte;
-typedef u_int32_t vlink_t;
-typedef u_int32_t vsize_t;
-typedef u_int32_t vaddr_t;
+typedef u_int32_t vlink_t; // for links; indexes, not pointers.
+typedef u_int32_t vsize_t; // for sizes of allocated/free chunks.
+typedef u_int32_t vaddr_t; // for references; indexes, not pointers.
+// u_int32_t is 32-bit unsigned value
 
 typedef struct free_list_header {
    u_int32_t magic;  // ought to contain MAGIC_FREE
