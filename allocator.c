@@ -47,9 +47,9 @@ static vsize_t memory_size;   // number of bytes malloc'd in memory[]
 void vlad_init(u_int32_t size)
 {
    // dummy statements to keep compiler happy
-   memory = NULL;
-   free_list_ptr = (vaddr_t)0;
-   memory_size = 0;
+   // memory = NULL;
+   // free_list_ptr = (vaddr_t)0;
+   // memory_size = 0;
    // TODO
    // remove the above when you implement your code
 
@@ -62,7 +62,14 @@ void vlad_init(u_int32_t size)
          abort();
       }
       memory_size = size;
-      // free_list_ptr = ???
+      free_list_ptr = (vaddr_t) 0;
+      // (free_header_t *) memory // cast the pointer from initial allocation?
+      // ?? free_header_t first = 
+      // first->magic = MAGIC_FREE;
+      // first->size = size;
+      // first->next = free_list_ptr;
+      // first->prev = free_list_ptr;
+
    }
 }
 
@@ -102,6 +109,8 @@ void vlad_free(void *object)
 void vlad_end(void)
 {
    // TODO
+
+   free(memory);
 }
 
 
