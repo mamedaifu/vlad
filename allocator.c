@@ -52,6 +52,18 @@ void vlad_init(u_int32_t size)
    memory_size = 0;
    // TODO
    // remove the above when you implement your code
+
+   if (memory != NULL){ // if already initialised, do nothing
+      // check if size is a power of 2
+      // if not, set it to smallest power of 2 larger than size
+      memory = malloc(size); // malloc returns NULL on fail
+      if (memory == NULL){   // if malloc failed:
+         fprintf(stderr, "vlad_init: insufficient memory");
+         abort();
+      }
+      memory_size = size;
+      // free_list_ptr = ???
+   }
 }
 
 
