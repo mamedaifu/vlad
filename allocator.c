@@ -56,6 +56,7 @@ void vlad_init(u_int32_t size)
    if (memory != NULL){ // if already initialised, do nothing
       // check if size is a power of 2
       // if not, set it to smallest power of 2 larger than size
+      // use bitshifting and maybe a function to do this?
       memory = malloc(size); // malloc returns NULL on fail
       if (memory == NULL){   // if malloc failed:
          fprintf(stderr, "vlad_init: insufficient memory");
