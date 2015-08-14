@@ -90,6 +90,7 @@ void *vlad_malloc(u_int32_t n)
 
    if (curr->size < HEADER_SIZE + n){
       // too small, move to next region
+      curr = curr->next;
    } else {
       // chosen_ptr = curr; // choose this region
       if (curr->next == curr){ // && curr->prev = curr // only free region
