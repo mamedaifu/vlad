@@ -84,7 +84,43 @@ void vlad_init(u_int32_t size)
 void *vlad_malloc(u_int32_t n)
 {
    // TODO
-   return NULL; // temporarily
+   // return NULL; // temporarily
+
+   free_header_t *curr = (free_header_t *) memory;
+   if (curr->magic != MAGIC_FREE){ // or MAGIC_ALLOC too?
+      fprintf(stderr, "Memory corruption");
+      abort();
+   }
+
+   byte *new_addr; // used for pointer arithmetic
+   free_header_t *new;
+   if ((curr->size/2) >= (HEADER_SIZE + n){
+      // split region into 2
+      new_addr = (byte *) curr + (curr->size/2);
+      new = (free_header_t *) new_addr;
+      new->next = curr->next;
+      new->prev = curr;
+      new->size = curr->size/2;
+      new->magic = MAGIC_FREE;
+      curr->size = curr->size/2;
+      curr->next = new;
+   } 
+
+   if (curr->size < HEADER_SIZE + n){
+      // too small, move to next region
+      curr = curr->next;
+   } else {
+      // chosen_ptr = curr; // choose this region
+      if (curr->next == curr){ // && curr->prev = curr // only free region
+         return NULL;
+      }
+   }
+   if (curr->next == free_list_ptr){
+      // reached end of list
+   }
+
+
+   return ((void*) (chosen_ptr + HEADER_SIZE));
 }
 
 
