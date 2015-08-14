@@ -74,9 +74,20 @@ void *vlad_malloc(u_int32_t n)
       abort();
    }
 
+   byte *new_addr; // used for pointer arithmetic
+   free_header_t *new;
    if ((curr->size/2) >= (HEADER_SIZE + n){
       // split region into 2
+      new_addr = (byte *) curr + (curr->size/2);
+      new = (free_header_t *) new_addr;
+      new->next = curr->next;
+      new->prev = curr;
+      new->size = curr->size/2;
+      new->magic = MAGIC_FREE;
+      curr->size = curr->size/2;
+      curr->next = new;
    } 
+
    if (curr->size < HEADER_SIZE + n){
       // too small, move to next region
    } else {
