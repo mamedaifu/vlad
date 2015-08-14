@@ -63,12 +63,11 @@ void vlad_init(u_int32_t size)
       }
       memory_size = size;
       free_list_ptr = (vaddr_t) 0;
-      // (free_header_t *) memory // cast the pointer from initial allocation?
-      // ?? free_header_t first = 
-      // first->magic = MAGIC_FREE;
-      // first->size = size;
-      // first->next = free_list_ptr;
-      // first->prev = free_list_ptr;
+      // ?? free_header_t *init_header = (free_header_t *) memory
+      // init_header->magic = MAGIC_FREE;
+      // init_header->size = size;
+      // init_header->next = free_list_ptr;
+      // init_header->prev = free_list_ptr;
 
    }
 }
