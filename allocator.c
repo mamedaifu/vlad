@@ -60,6 +60,18 @@ u_int32_t power2(u_int32_t n){
    return n;
 }
 
+void *itop(vlink_t i){ // converts indexes to pointers
+   void *p;
+   p = memory + i;
+   return p;
+}
+
+vlink_t ptoi(void * p){ // converts pointer to indexes
+   vlink_t i;
+   i = (byte *) p - memory;
+   return i;
+}
+
 // Allocator Functions
 
 // Input: size - number of bytes to make available to the allocator
@@ -110,7 +122,7 @@ void *vlad_malloc(u_int32_t n)
    // TODO
    // return NULL; // temporarily
 
-   free_header_t *curr = (free_header_t *) memory;
+   free_header_t *curr = (free_header_t *) itop(free_list_ptr);
    if (curr->magic != MAGIC_FREE){ // or MAGIC_ALLOC too?
       fprintf(stderr, "Memory corruption");
       abort();
@@ -126,11 +138,11 @@ void *vlad_malloc(u_int32_t n)
       new_addr = (byte *) curr + (curr->size/2);
       new = (free_header_t *) new_addr;
       new->next = curr->next;
-      new->prev = curr;
+      new->prev = ptoi(curr);
       new->size = curr->size/2;
       new->magic = MAGIC_FREE;
       curr->size = curr->size/2;
-      curr->next = new;
+      curr->next = ptoi(new);
    } 
    // NOTE: Need to search for smallest region BEFORE splitting regions.
    if (curr->size < HEADER_SIZE + n){
