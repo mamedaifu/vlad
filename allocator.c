@@ -92,6 +92,9 @@ void *vlad_malloc(u_int32_t n)
       abort();
    }
 
+   // NOTE: next and prev are not real pointers but indexes!
+   // void *, vaddr_t, vlink_t refer to locations in memory[]
+   // need a way to map vetween void * and vaddr_t (i.e. pointer & index)
    byte *new_addr; // used for pointer arithmetic
    free_header_t *new;
    if ((curr->size/2) >= (HEADER_SIZE + n){
@@ -105,7 +108,7 @@ void *vlad_malloc(u_int32_t n)
       curr->size = curr->size/2;
       curr->next = new;
    } 
-
+   // NOTE: Need to search for smallest region BEFORE splitting regions.
    if (curr->size < HEADER_SIZE + n){
       // too small, move to next region
       curr = curr->next;
