@@ -36,6 +36,29 @@ static vaddr_t free_list_ptr; // index in memory[] of first block in free list
 static vsize_t memory_size;   // number of bytes malloc'd in memory[]
 
 
+u_int32_t power2(u_int32_t n){
+   // ALTERNATIVE:
+   // for (int i = 1; i <= 0xFFFFFFFF; i = i << 1){
+   //    if ((n & i) != 0){ // if there is a 1
+   //       ones++;
+   //    }
+   // }
+
+   int ones = 0;
+   u_int32_t i = 1 << 31;
+   while (i > 0 && ones < 2){
+      if ((n & i) != 0){ // if there is a 1
+         ones++;
+         u_int32_t rounded = i << 1;
+      }
+      i = i >> 1;
+   }
+   if (ones > 1){
+      n = rounded;
+   }
+   return n;
+}
+
 // Input: size - number of bytes to make available to the allocator
 // Output: none              
 // Precondition: Size is a power of two.
@@ -57,6 +80,7 @@ void vlad_init(u_int32_t size)
       // check if size is a power of 2
       // if not, set it to smallest power of 2 larger than size
       // use bitshifting and maybe a function to do this?
+      size = power2(size);
       memory = malloc(size); // malloc returns NULL on fail
       if (memory == NULL){   // if malloc failed:
          fprintf(stderr, "vlad_init: insufficient memory");
