@@ -35,6 +35,32 @@ static byte *memory = NULL;   // pointer to start of allocator memory
 static vaddr_t free_list_ptr; // index in memory[] of first block in free list
 static vsize_t memory_size;   // number of bytes malloc'd in memory[]
 
+// Helper functions
+
+u_int32_t power2(u_int32_t n){
+   // ALTERNATIVE:
+   // for (int i = 1; i <= 0xFFFFFFFF; i = i << 1){
+   //    if ((n & i) != 0){ // if there is a 1
+   //       ones++;
+   //    }
+   // }
+   u_int32_t rounded;
+   int ones = 0;
+   u_int32_t i = 1 << 31;
+   while (i > 0 && ones < 2){
+      if ((n & i) != 0){ // if there is a 1
+         ones++;
+         rounded = i << 1;
+      }
+      i = i >> 1;
+   }
+   if (ones > 1){
+      n = rounded;
+   }
+   return n;
+}
+
+// Allocator Functions
 
 // Input: size - number of bytes to make available to the allocator
 // Output: none              
@@ -54,8 +80,7 @@ void vlad_init(u_int32_t size)
    // remove the above when you implement your code
 
    if (memory != NULL){ // if already initialised, do nothing
-      // check if size is a power of 2
-      // if not, set it to smallest power of 2 larger than size
+      size = power2(size); // translate to smallest larger power of 2
       memory = malloc(size); // malloc returns NULL on fail
       if (memory == NULL){   // if malloc failed:
          fprintf(stderr, "vlad_init: insufficient memory");
@@ -63,12 +88,11 @@ void vlad_init(u_int32_t size)
       }
       memory_size = size;
       free_list_ptr = (vaddr_t) 0;
-      // ?? free_header_t *init_header = (free_header_t *) memory
-      // init_header->magic = MAGIC_FREE;
-      // init_header->size = size;
-      // init_header->next = free_list_ptr;
-      // init_header->prev = free_list_ptr;
-
+      free_header_t *init_header = (free_header_t *) memory;
+      init_header->magic = MAGIC_FREE;
+      init_header->size = size;
+      init_header->next = free_list_ptr;
+      init_header->prev = free_list_ptr;
    }
 }
 
