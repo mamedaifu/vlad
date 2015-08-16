@@ -213,8 +213,10 @@ void *vlad_malloc(u_int32_t n)
 void vlad_free(void *object)
 {
    // TODO
-   byte *to_free_addr = object - HEADER_SIZE;
-   free_header_t *to_free = (free_header_t *) to_free_addr;
+   byte *to_free_addr;
+   free_header_t *to_free;
+   to_free_addr = (byte *) object - HEADER_SIZE + 0x10;
+   to_free = (free_header_t *) to_free_addr;
    printf("%p\n", to_free_addr); // pointer
    if (to_free->magic != MAGIC_ALLOC){
       printf("%x\n",to_free->magic); // pointer
@@ -258,6 +260,7 @@ void vlad_stats(void)
    // understand Vlad's current state in this function
    // REMOVE all pfthese statements when your vlad_malloc() is done
    printf("vlad_stats() won't work until vlad_malloc() works\n");
+
    return;
 }
 
@@ -320,8 +323,8 @@ void vlad_reveal(void *alpha[26])
 
 	// TODO
 	// REMOVE these statements when your vlad_malloc() is done
-    printf("vlad_reveal() won't work until vlad_malloc() works\n");
-    return;
+    // printf("vlad_reveal() won't work until vlad_malloc() works\n");
+    // return;
 
     // initilise size lists
     for (i=0; i<26; i++) {
