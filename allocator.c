@@ -213,6 +213,24 @@ void *vlad_malloc(u_int32_t n)
 void vlad_free(void *object)
 {
    // TODO
+
+   free_header_t *to_free = (byte *) object - HEADER_SIZE;
+   if (to_free->magic != MAGIC_ALLOC){
+      fprintf(stderr, "Attempt to free non-allocated memory");
+      abort();
+   }
+   vaddr_t index = to_free - memory;
+   free_header_t *curr = (free_header_t *) itop(free_list_ptr);
+   while (curr->next < index){
+      curr = itop(curr->next);
+   }
+   to_free->prev = ptoi(curr);
+   curr = itop(curr->next);
+   to_free->next = ptoi(curr);
+   to_free->magic = MAGIC_FREE;
+   if (index < free_list_ptr){
+      free_list_ptr = index;
+   }
 }
 
 
