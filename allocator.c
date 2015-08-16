@@ -145,7 +145,7 @@ void *vlad_malloc(u_int32_t n)
          done = 1; // finished search
       }
       printf("2\n"); // debug
-      curr = itop(curr->next); // move to next region
+      curr = (free_header_t *) itop(curr->next); // move to next region
    }
    if (chosen == NULL) return NULL;
    // OLD UNFINISHED METHOD:
@@ -188,14 +188,16 @@ void *vlad_malloc(u_int32_t n)
    }
 
    // Allocate Region
-   free_header_t temp;
-   temp = itop(curr->prev);
+   free_header_t *temp;
+   temp = (free_header_t *) itop(curr->prev);
    temp->next = curr->next;
-   temp = itop(curr->next);
+   temp = (free_header_t *) itop(curr->next);
    temp->prev = curr->prev;
    curr->magic = MAGIC_ALLOC;
 
    // if free_list_ptr is now allocated, adjust free_list_ptr
+   curr = (free_header_t *) itop(free_list_ptr);
+   if (curr->magic == MAGIC_ALLOC) free_list_ptr = curr->next;
 
    return ((void*) (chosen + HEADER_SIZE));
 }
