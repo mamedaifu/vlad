@@ -60,6 +60,18 @@ u_int32_t power2(u_int32_t n){
    return n;
 }
 
+void *itop(vlink_t i){ // converts indexes to pointers
+   void *p;
+   p = memory + i;
+   return p;
+}
+
+vlink_t ptoi(void * p){ // converts pointer to indexes
+   vlink_t i;
+   i = (byte *) p - memory;
+   return i;
+}
+
 // Allocator Functions
 
 // Input: size - number of bytes to make available to the allocator
@@ -78,10 +90,11 @@ void vlad_init(u_int32_t size)
    // memory_size = 0;
    // TODO
    // remove the above when you implement your code
-
-   if (memory != NULL){ // if already initialised, do nothing
+   printf("0\n"); // debug
+   if (memory == NULL){ // if already initialised, do nothing
       size = power2(size); // translate to smallest larger power of 2
       memory = malloc(size); // malloc returns NULL on fail
+      printf("b\n"); // debug
       if (memory == NULL){   // if malloc failed:
          fprintf(stderr, "vlad_init: insufficient memory");
          abort();
@@ -93,6 +106,7 @@ void vlad_init(u_int32_t size)
       init_header->size = size;
       init_header->next = free_list_ptr;
       init_header->prev = free_list_ptr;
+      printf("a\n"); // debug
    }
 }
 
@@ -110,41 +124,82 @@ void *vlad_malloc(u_int32_t n)
    // TODO
    // return NULL; // temporarily
 
-   free_header_t *curr = (free_header_t *) memory;
+   free_header_t *curr = (free_header_t *) itop(free_list_ptr);
    if (curr->magic != MAGIC_FREE){ // or MAGIC_ALLOC too?
       fprintf(stderr, "Memory corruption");
       abort();
    }
 
+   free_header_t *chosen = NULL;
+   int done = 0;
+   int chosen_size = 0;
+
+   // NOTE: Need to search for smallest region BEFORE splitting regions.
+   while (done == 0){ // search for smallest region that can fit n
+      printf("1\n"); // debug
+      if ((curr->size >= HEADER_SIZE + n) && ((curr->size < chosen_size) || (chosen_size == 0))){
+         chosen = curr;
+         chosen_size = curr->size;
+      }
+      if (curr->next == free_list_ptr){
+         done = 1; // finished search
+      }
+      printf("2\n"); // debug
+      curr = (free_header_t *) itop(curr->next); // move to next region
+   }
+   if (chosen == NULL) return NULL;
+   // OLD UNFINISHED METHOD:
+   // while (done == 0) {
+   //    if (curr->size < HEADER_SIZE + n){
+   //       curr = itop(curr->next); // region too small, move to next region
+   //    } else {
+   //       if (curr->size < chosen_size){
+   //          chosen = curr; // choose this region
+
+   //       }
+
+   //       // is this right?
+   //       if (itop(curr->next) == curr){ // && curr->prev = curr // only free region
+   //          return NULL;
+   //       }
+   //    }
+   //    if (curr->next == free_list_ptr){
+   //       // reached end of list
+   //       done = 1;
+   //    }
+   // }
+
+   printf("3\n"); // debug
+   // NOTE: next and prev are not real pointers but indexes!
+   // void *, vaddr_t, vlink_t refer to locations in memory[]
+   // need a way to map vetween void * and vaddr_t (i.e. pointer & index)
    byte *new_addr; // used for pointer arithmetic
    free_header_t *new;
-   if ((curr->size/2) >= (HEADER_SIZE + n){
+   if ((curr->size/2) >= (HEADER_SIZE + n)){ // if can fit in half
       // split region into 2
       new_addr = (byte *) curr + (curr->size/2);
       new = (free_header_t *) new_addr;
       new->next = curr->next;
-      new->prev = curr;
+      new->prev = ptoi(curr);
       new->size = curr->size/2;
       new->magic = MAGIC_FREE;
       curr->size = curr->size/2;
-      curr->next = new;
-   } 
-
-   if (curr->size < HEADER_SIZE + n){
-      // too small, move to next region
-      curr = curr->next;
-   } else {
-      // chosen_ptr = curr; // choose this region
-      if (curr->next == curr){ // && curr->prev = curr // only free region
-         return NULL;
-      }
-   }
-   if (curr->next == free_list_ptr){
-      // reached end of list
+      curr->next = ptoi(new);
    }
 
+   // Allocate Region
+   free_header_t *temp;
+   temp = (free_header_t *) itop(curr->prev);
+   temp->next = curr->next;
+   temp = (free_header_t *) itop(curr->next);
+   temp->prev = curr->prev;
+   curr->magic = MAGIC_ALLOC;
 
-   return ((void*) (chosen_ptr + HEADER_SIZE));
+   // if free_list_ptr is now allocated, adjust free_list_ptr
+   curr = (free_header_t *) itop(free_list_ptr);
+   if (curr->magic == MAGIC_ALLOC) free_list_ptr = curr->next;
+
+   return ((void*) (chosen + HEADER_SIZE));
 }
 
 
