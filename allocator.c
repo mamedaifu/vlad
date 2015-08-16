@@ -175,7 +175,7 @@ void *vlad_malloc(u_int32_t n)
    // need a way to map vetween void * and vaddr_t (i.e. pointer & index)
    byte *new_addr; // used for pointer arithmetic
    free_header_t *new;
-   if ((curr->size/2) >= (HEADER_SIZE + n)){ // if can fit in half
+   while ((curr->size/2) >= (HEADER_SIZE + n)){ // if can fit in half
       // split region into 2
       new_addr = (byte *) curr + (curr->size/2);
       new = (free_header_t *) new_addr;
