@@ -215,7 +215,9 @@ void vlad_free(void *object)
    // TODO
    byte *to_free_addr = object - HEADER_SIZE;
    free_header_t *to_free = (free_header_t *) to_free_addr;
+   printf("%p\n", to_free_addr); // pointer
    if (to_free->magic != MAGIC_ALLOC){
+      printf("%x\n",to_free->magic); // pointer
       fprintf(stderr, "Attempt to free non-allocated memory");
       abort();
    }
