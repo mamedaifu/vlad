@@ -179,6 +179,7 @@ void *vlad_malloc(u_int32_t n)
    // need a way to map vetween void * and vaddr_t (i.e. pointer & index)
    byte *new_addr; // used for pointer arithmetic
    free_header_t *new;
+   free_header_t *temp;
    while ((curr->size/2) >= (HEADER_SIZE + n)){ // if can fit in half
       // split region into 2
       new_addr = (byte *) curr + (curr->size/2);
@@ -187,12 +188,13 @@ void *vlad_malloc(u_int32_t n)
       new->prev = ptoi(curr);
       new->size = curr->size/2;
       new->magic = MAGIC_FREE;
+      temp = (free_header_t *) itop(curr->next);
+      temp->prev = ptoi(new);
       curr->size = curr->size/2;
       curr->next = ptoi(new);
    }
 
    // Allocate Region
-   free_header_t *temp;
    temp = (free_header_t *) itop(curr->prev);
    temp->next = curr->next;
    temp = (free_header_t *) itop(curr->next);
