@@ -72,6 +72,10 @@ vlink_t ptoi(void * p){ // converts pointer to indexes
    return i;
 }
 
+void showHeaderInfo(free_header_t* header){
+   printf("\tChunk index %ld, size %d, tag %s, next %d, prev %d\n", (void*)header - (void*)memory, header->size, (header->magic == MAGIC_FREE) ? "FREE" : "ALLOC", header->next, header->prev);
+}
+
 // Allocator Functions
 
 // Input: size - number of bytes to make available to the allocator
@@ -90,11 +94,11 @@ void vlad_init(u_int32_t size)
    // memory_size = 0;
    // TODO
    // remove the above when you implement your code
-   printf("0\n"); // debug
+   // printf("0\n"); // debug
    if (memory == NULL){ // if already initialised, do nothing
       size = power2(size); // translate to smallest larger power of 2
       memory = malloc(size); // malloc returns NULL on fail
-      printf("b\n"); // debug
+      // printf("b\n"); // debug
       if (memory == NULL){   // if malloc failed:
          fprintf(stderr, "vlad_init: insufficient memory");
          abort();
@@ -106,7 +110,7 @@ void vlad_init(u_int32_t size)
       init_header->size = size;
       init_header->next = free_list_ptr;
       init_header->prev = free_list_ptr;
-      printf("a\n"); // debug
+      // printf("a\n"); // debug
    }
 }
 
@@ -136,7 +140,7 @@ void *vlad_malloc(u_int32_t n)
 
    // NOTE: Need to search for smallest region BEFORE splitting regions.
    while (done == 0){ // search for smallest region that can fit n
-      printf("1\n"); // debug
+      // printf("1\n"); // debug
       if ((curr->size >= HEADER_SIZE + n) && ((curr->size < chosen_size) || (chosen_size == 0))){
          chosen = curr;
          chosen_size = curr->size;
@@ -144,7 +148,7 @@ void *vlad_malloc(u_int32_t n)
       if (curr->next == free_list_ptr){
          done = 1; // finished search
       }
-      printf("2\n"); // debug
+      // printf("2\n"); // debug
       curr = (free_header_t *) itop(curr->next); // move to next region
    }
    if (chosen == NULL) return NULL;
@@ -169,37 +173,50 @@ void *vlad_malloc(u_int32_t n)
    //    }
    // }
 
-   printf("3\n"); // debug
+   // printf("3\n"); // debug
    // NOTE: next and prev are not real pointers but indexes!
    // void *, vaddr_t, vlink_t refer to locations in memory[]
    // need a way to map vetween void * and vaddr_t (i.e. pointer & index)
    byte *new_addr; // used for pointer arithmetic
    free_header_t *new;
-   if ((curr->size/2) >= (HEADER_SIZE + n)){ // if can fit in half
+   free_header_t *temp;
+   while ((chosen->size/2) >= (HEADER_SIZE + n)){ // if can fit in half
       // split region into 2
-      new_addr = (byte *) curr + (curr->size/2);
+      new_addr = (byte *) chosen + (chosen->size/2);
       new = (free_header_t *) new_addr;
-      new->next = curr->next;
-      new->prev = ptoi(curr);
-      new->size = curr->size/2;
+      new->next = chosen->next;
+      new->prev = ptoi(chosen);
+      new->size = chosen->size/2;
       new->magic = MAGIC_FREE;
-      curr->size = curr->size/2;
-      curr->next = ptoi(new);
+      temp = (free_header_t *) itop(chosen->next);
+      temp->prev = ptoi(new);
+      chosen->size = chosen->size/2;
+      chosen->next = ptoi(new);
+      // showHeaderInfo(chosen);
+      // showHeaderInfo(new);
    }
 
    // Allocate Region
-   free_header_t *temp;
-   temp = (free_header_t *) itop(curr->prev);
-   temp->next = curr->next;
-   temp = (free_header_t *) itop(curr->next);
-   temp->prev = curr->prev;
-   curr->magic = MAGIC_ALLOC;
+   temp = (free_header_t *) itop(chosen->prev);
+   temp->next = chosen->next;
+   temp = (free_header_t *) itop(chosen->next);
+   temp->prev = chosen->prev;
+   chosen->magic = MAGIC_ALLOC;
+   // showHeaderInfo(chosen);
+   // printf("%x\n",chosen->magic);
 
    // if free_list_ptr is now allocated, adjust free_list_ptr
    curr = (free_header_t *) itop(free_list_ptr);
    if (curr->magic == MAGIC_ALLOC) free_list_ptr = curr->next;
 
-   return ((void*) (chosen + HEADER_SIZE));
+   // printf("%p\n",(byte*) (chosen));
+   // printf("%lx\n",HEADER_SIZE);
+   // printf("%p\n",(byte*) (chosen + HEADER_SIZE));
+   // printf("%p\n",(byte*) chosen + HEADER_SIZE);
+   // printf("%x\n",chosen->magic);
+   // printf("%lx\n",HEADER_SIZE);
+   byte *chosen_ptr = (byte *) chosen;
+   return ((void*) (chosen_ptr + HEADER_SIZE));
 }
 
 
@@ -213,6 +230,54 @@ void *vlad_malloc(u_int32_t n)
 void vlad_free(void *object)
 {
    // TODO
+   byte *to_free_addr;
+   free_header_t *to_free;
+   to_free_addr = (void *) object - HEADER_SIZE;
+   to_free = (free_header_t *) to_free_addr;
+   // printf("%p\n", object);
+   // printf("%p\n", to_free); // pointer
+   // printf("%p\n", to_free_addr); // pointer
+   // printf("%lx\n",HEADER_SIZE);
+   if (to_free->magic != MAGIC_ALLOC){
+      // printf("%x\n",to_free->magic); // pointer
+      fprintf(stderr, "Attempt to free non-allocated memory");
+      abort();
+   }
+   // vaddr_t index = (byte *) to_free - memory;
+   vaddr_t index = ptoi(to_free);
+   free_header_t *curr = (free_header_t *) itop(free_list_ptr);
+   // if (index < free_list_ptr){ // if index behind the start of the list
+   //    while (curr->next > free_list_ptr){
+   //       curr = itop(curr->next);
+   //    }
+   // }
+   // while (curr->next < index){ // what happens if index is lower i.e. behind free_list_ptr?
+   //    curr = itop(curr->next);
+   // }
+   while (curr->next > free_list_ptr){ // move so that curr->mext is before curr
+         curr = itop(curr->next);      // i.e. until first loop-around
+   }
+   if ((index < curr->next) || (index < ptoi(curr))){ // if index is not in front of whole list
+      while (curr->next < index){ // loop till index is sandwiched
+         curr = itop(curr->next); // otherwise index is in front, so already in right place
+      }
+   }
+   // printf("%d\n",(int) ptoi(curr));
+   to_free->prev = ptoi(curr);
+   to_free->next = curr->next;
+   curr->next = index;
+   curr = itop(to_free->next);
+   curr->prev = index;
+   // curr = itop(curr->next);
+   // to_free->next = ptoi(curr);
+   to_free->magic = MAGIC_FREE;
+   // showHeaderInfo(to_free);
+
+   // printf("%x\n",(int) free_list_ptr);
+   if (index < free_list_ptr){ // change free_list_ptr to be lowest index
+      free_list_ptr = index;
+      // printf("%x\n",(int) free_list_ptr);
+   }
 }
 
 
@@ -237,7 +302,14 @@ void vlad_stats(void)
    // put whatever code you think will help you
    // understand Vlad's current state in this function
    // REMOVE all pfthese statements when your vlad_malloc() is done
-   printf("vlad_stats() won't work until vlad_malloc() works\n");
+   // printf("vlad_stats() won't work until vlad_malloc() works\n");
+
+   free_header_t *curr = (free_header_t *) itop(free_list_ptr);
+   while (curr->next != free_list_ptr){
+      // printf("%d")
+      showHeaderInfo(curr);
+      curr = (free_header_t *) itop(curr->next);
+   }
    return;
 }
 
@@ -300,8 +372,8 @@ void vlad_reveal(void *alpha[26])
 
 	// TODO
 	// REMOVE these statements when your vlad_malloc() is done
-    printf("vlad_reveal() won't work until vlad_malloc() works\n");
-    return;
+    // printf("vlad_reveal() won't work until vlad_malloc() works\n");
+    // return;
 
     // initilise size lists
     for (i=0; i<26; i++) {
