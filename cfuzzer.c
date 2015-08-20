@@ -1,3 +1,5 @@
+// Original code by Tek Huynh
+
 #include <stdio.h>
 #include <stdlib.h>
 

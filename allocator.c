@@ -73,6 +73,7 @@ vlink_t ptoi(void * p){ // converts pointer to indexes
 }
 
 void showHeaderInfo(free_header_t* header){
+   // Original code by Luke Fitzpatrick
    printf("\tChunk index %ld, size %d, tag %s, next %d, prev %d\n", (void*)header - (void*)memory, header->size, (header->magic == MAGIC_FREE) ? "FREE" : "ALLOC", header->next, header->prev);
 }
 
