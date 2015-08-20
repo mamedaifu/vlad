@@ -243,17 +243,40 @@ void vlad_free(void *object)
       fprintf(stderr, "Attempt to free non-allocated memory");
       abort();
    }
-   vaddr_t index = (byte *) to_free - memory;
+   // vaddr_t index = (byte *) to_free - memory;
+   vaddr_t index = ptoi(to_free);
    free_header_t *curr = (free_header_t *) itop(free_list_ptr);
-   while (curr->next < index){
-      curr = itop(curr->next);
+   // if (index < free_list_ptr){ // if index behind the start of the list
+   //    while (curr->next > free_list_ptr){
+   //       curr = itop(curr->next);
+   //    }
+   // }
+   // while (curr->next < index){ // what happens if index is lower i.e. behind free_list_ptr?
+   //    curr = itop(curr->next);
+   // }
+   while (curr->next > free_list_ptr){ // move so that curr->mext is before curr
+         curr = itop(curr->next);      // i.e. until first loop-around
    }
+   if ((index < curr->next) || (index < ptoi(curr))){ // if index is not in front of whole list
+      while (curr->next < index){ // loop till index is sandwiched
+         curr = itop(curr->next); // otherwise index is in front, so already in right place
+      }
+   }
+   // printf("%d\n",(int) ptoi(curr));
    to_free->prev = ptoi(curr);
-   curr = itop(curr->next);
-   to_free->next = ptoi(curr);
+   to_free->next = curr->next;
+   curr->next = index;
+   curr = itop(to_free->next);
+   curr->prev = index;
+   // curr = itop(curr->next);
+   // to_free->next = ptoi(curr);
    to_free->magic = MAGIC_FREE;
-   if (index < free_list_ptr){
+   // showHeaderInfo(to_free);
+
+   // printf("%x\n",(int) free_list_ptr);
+   if (index < free_list_ptr){ // change free_list_ptr to be lowest index
       free_list_ptr = index;
+      // printf("%x\n",(int) free_list_ptr);
    }
 }
 
