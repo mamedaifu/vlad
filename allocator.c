@@ -236,6 +236,8 @@ void *vlad_malloc(u_int32_t n)
       // showHeaderInfo(new);
    }
 
+   if (chosen->next == ptoi(chosen)) return NULL; // if only free region, return null since must always have one free region.
+
    // Allocate Region
    temp = (free_header_t *) itop(chosen->prev);
    temp->next = chosen->next;
