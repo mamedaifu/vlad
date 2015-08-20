@@ -76,6 +76,44 @@ void showHeaderInfo(free_header_t* header){
    printf("\tChunk index %ld, size %d, tag %s, next %d, prev %d\n", (void*)header - (void*)memory, header->size, (header->magic == MAGIC_FREE) ? "FREE" : "ALLOC", header->next, header->prev);
 }
 
+void merge(vaddr_t index){
+   free_header_t *curr = (free_header_t *) itop(index);
+   free_header_t *temp = (free_header_t *) itop(curr->next);
+   // conditions:
+   // regions must be same size
+   // regions must be directly adjacent
+   // regions must have been split from same parent
+   // ^must tesselate? such that if you continually added/subtracted the size, would exactly match with ends?
+   
+   // check next region
+   if ((curr->size == temp->size) && (index + curr->size == curr->next)){ // check size and adjacency
+      // check tesselation
+      if (index % (curr->size*2) == 0){
+         // tesselates, so can merge
+         temp->magic = 0;
+         curr->size = curr->size*2;
+         curr->next = temp->next;
+         temp = itop(temp->next);
+         temp->prev = index;
+      } 
+   }
+
+   // check prev region
+   temp = (free_header_t *) itop(curr->prev);
+   if ((curr->size == temp->size) && (index - curr->size == curr->prev)){ // check size and adjacency
+      // check tesselation
+      index = index - curr->size;
+      if (index % (curr->size*2) == 0){
+         // tesselates, so can merge
+         curr->magic = 0;
+         temp->size = curr->size*2;
+         temp->next = curr->next;
+         curr = itop(curr->next);
+         curr->prev = index;        
+      }
+   }
+}
+
 // Allocator Functions
 
 // Input: size - number of bytes to make available to the allocator
