@@ -95,6 +95,7 @@ void merge(vaddr_t index){
          curr->next = temp->next;
          temp = itop(temp->next);
          temp->prev = index;
+         merge(index);
       } 
    }
 
@@ -109,7 +110,8 @@ void merge(vaddr_t index){
          temp->size = curr->size*2;
          temp->next = curr->next;
          curr = itop(curr->next);
-         curr->prev = index;        
+         curr->prev = index;
+         merge(index);        
       }
    }
 }
