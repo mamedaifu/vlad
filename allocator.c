@@ -50,7 +50,7 @@ u_int32_t power2(u_int32_t n){
    while (i > 0 && ones < 2){
       if ((n & i) != 0){ // if there is a 1
          ones++;
-         rounded = i << 1;
+         if (ones == 1) rounded = i << 1; // should only do this the first time
       }
       i = i >> 1;
    }
