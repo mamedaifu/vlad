@@ -72,6 +72,10 @@ vlink_t ptoi(void * p){ // converts pointer to indexes
    return i;
 }
 
+void showHeaderInfo(free_header_t* header){
+   printf("\tChunk index %ld, size %d, tag %s, next %d, prev %d\n", (void*)header - (void*)memory, header->size, (header->magic == MAGIC_FREE) ? "FREE" : "ALLOC", header->next, header->prev);
+}
+
 // Allocator Functions
 
 // Input: size - number of bytes to make available to the allocator
@@ -259,8 +263,14 @@ void vlad_stats(void)
    // put whatever code you think will help you
    // understand Vlad's current state in this function
    // REMOVE all pfthese statements when your vlad_malloc() is done
-   printf("vlad_stats() won't work until vlad_malloc() works\n");
+   // printf("vlad_stats() won't work until vlad_malloc() works\n");
 
+   free_header_t *curr = (free_header_t *) itop(free_list_ptr);
+   while (curr->next != free_list_ptr){
+      // printf("%d")
+      showHeaderInfo(curr);
+      curr = (free_header_t *) itop(curr->next);
+   }
    return;
 }
 
