@@ -180,32 +180,43 @@ void *vlad_malloc(u_int32_t n)
    byte *new_addr; // used for pointer arithmetic
    free_header_t *new;
    free_header_t *temp;
-   while ((curr->size/2) >= (HEADER_SIZE + n)){ // if can fit in half
+   while ((chosen->size/2) >= (HEADER_SIZE + n)){ // if can fit in half
       // split region into 2
-      new_addr = (byte *) curr + (curr->size/2);
+      new_addr = (byte *) chosen + (chosen->size/2);
       new = (free_header_t *) new_addr;
-      new->next = curr->next;
-      new->prev = ptoi(curr);
-      new->size = curr->size/2;
+      new->next = chosen->next;
+      new->prev = ptoi(chosen);
+      new->size = chosen->size/2;
       new->magic = MAGIC_FREE;
-      temp = (free_header_t *) itop(curr->next);
+      temp = (free_header_t *) itop(chosen->next);
       temp->prev = ptoi(new);
-      curr->size = curr->size/2;
-      curr->next = ptoi(new);
+      chosen->size = chosen->size/2;
+      chosen->next = ptoi(new);
+      // showHeaderInfo(chosen);
+      // showHeaderInfo(new);
    }
 
    // Allocate Region
-   temp = (free_header_t *) itop(curr->prev);
-   temp->next = curr->next;
-   temp = (free_header_t *) itop(curr->next);
-   temp->prev = curr->prev;
-   curr->magic = MAGIC_ALLOC;
+   temp = (free_header_t *) itop(chosen->prev);
+   temp->next = chosen->next;
+   temp = (free_header_t *) itop(chosen->next);
+   temp->prev = chosen->prev;
+   chosen->magic = MAGIC_ALLOC;
+   // showHeaderInfo(chosen);
+   // printf("%x\n",chosen->magic);
 
    // if free_list_ptr is now allocated, adjust free_list_ptr
    curr = (free_header_t *) itop(free_list_ptr);
    if (curr->magic == MAGIC_ALLOC) free_list_ptr = curr->next;
 
-   return ((void*) (chosen + HEADER_SIZE));
+   // printf("%p\n",(byte*) (chosen));
+   // printf("%lx\n",HEADER_SIZE);
+   // printf("%p\n",(byte*) (chosen + HEADER_SIZE));
+   // printf("%p\n",(byte*) chosen + HEADER_SIZE);
+   // printf("%x\n",chosen->magic);
+   // printf("%lx\n",HEADER_SIZE);
+   byte *chosen_ptr = (byte *) chosen;
+   return ((void*) (chosen_ptr + HEADER_SIZE));
 }
 
 
@@ -221,11 +232,14 @@ void vlad_free(void *object)
    // TODO
    byte *to_free_addr;
    free_header_t *to_free;
-   to_free_addr = (byte *) object - HEADER_SIZE + 0x10;
+   to_free_addr = (void *) object - HEADER_SIZE;
    to_free = (free_header_t *) to_free_addr;
-   printf("%p\n", to_free_addr); // pointer
+   // printf("%p\n", object);
+   // printf("%p\n", to_free); // pointer
+   // printf("%p\n", to_free_addr); // pointer
+   // printf("%lx\n",HEADER_SIZE);
    if (to_free->magic != MAGIC_ALLOC){
-      printf("%x\n",to_free->magic); // pointer
+      // printf("%x\n",to_free->magic); // pointer
       fprintf(stderr, "Attempt to free non-allocated memory");
       abort();
    }
