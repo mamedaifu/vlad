@@ -137,7 +137,8 @@ void vlad_init(u_int32_t size)
    // remove the above when you implement your code
    // printf("0\n"); // debug
    if (memory == NULL){ // if already initialised, do nothing
-      size = power2(size); // translate to smallest larger power of 2
+      if (size < 512) size = 512; // not sure if working
+      size = power2(size); // translate to smallest larger power of 2 // not working properly for anything not a power of 2
       memory = malloc(size); // malloc returns NULL on fail
       // printf("b\n"); // debug
       if (memory == NULL){   // if malloc failed:
