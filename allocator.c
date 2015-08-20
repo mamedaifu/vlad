@@ -316,6 +316,7 @@ void vlad_free(void *object)
       free_list_ptr = index;
       // printf("%x\n",(int) free_list_ptr);
    }
+   merge(index);
 }
 
 
