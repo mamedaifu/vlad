@@ -50,7 +50,7 @@ u_int32_t power2(u_int32_t n){
    while (i > 0 && ones < 2){
       if ((n & i) != 0){ // if there is a 1
          ones++;
-         rounded = i << 1;
+         if (ones == 1) rounded = i << 1; // should only do this the first time
       }
       i = i >> 1;
    }
@@ -73,7 +73,48 @@ vlink_t ptoi(void * p){ // converts pointer to indexes
 }
 
 void showHeaderInfo(free_header_t* header){
+   // Original code by Luke Fitzpatrick
    printf("\tChunk index %ld, size %d, tag %s, next %d, prev %d\n", (void*)header - (void*)memory, header->size, (header->magic == MAGIC_FREE) ? "FREE" : "ALLOC", header->next, header->prev);
+}
+
+void merge(vaddr_t index){
+   free_header_t *curr = (free_header_t *) itop(index);
+   free_header_t *temp = (free_header_t *) itop(curr->next);
+   // conditions:
+   // regions must be same size
+   // regions must be directly adjacent
+   // regions must have been split from same parent
+   // ^must tesselate? such that if you continually added/subtracted the size, would exactly match with ends?
+   
+   // check next region
+   if ((curr->size == temp->size) && (index + curr->size == curr->next)){ // check size and adjacency
+      // check tesselation
+      if (index % (curr->size*2) == 0){
+         // tesselates, so can merge
+         temp->magic = 0;
+         curr->size = curr->size*2;
+         curr->next = temp->next;
+         temp = itop(temp->next);
+         temp->prev = index;
+         merge(index);
+      } 
+   }
+
+   // check prev region
+   temp = (free_header_t *) itop(curr->prev);
+   if ((curr->size == temp->size) && (index - curr->size == curr->prev)){ // check size and adjacency
+      // check tesselation
+      index = index - curr->size;
+      if (index % (curr->size*2) == 0){
+         // tesselates, so can merge
+         curr->magic = 0;
+         temp->size = curr->size*2;
+         temp->next = curr->next;
+         curr = itop(curr->next);
+         curr->prev = index;
+         merge(index);        
+      }
+   }
 }
 
 // Allocator Functions
@@ -96,7 +137,8 @@ void vlad_init(u_int32_t size)
    // remove the above when you implement your code
    // printf("0\n"); // debug
    if (memory == NULL){ // if already initialised, do nothing
-      size = power2(size); // translate to smallest larger power of 2
+      if (size < 512) size = 512; // not sure if working
+      size = power2(size); // translate to smallest larger power of 2 // not working properly for anything not a power of 2
       memory = malloc(size); // malloc returns NULL on fail
       // printf("b\n"); // debug
       if (memory == NULL){   // if malloc failed:
@@ -196,6 +238,8 @@ void *vlad_malloc(u_int32_t n)
       // showHeaderInfo(new);
    }
 
+   if (chosen->next == ptoi(chosen)) return NULL; // if only free region, return null since must always have one free region.
+
    // Allocate Region
    temp = (free_header_t *) itop(chosen->prev);
    temp->next = chosen->next;
@@ -278,6 +322,7 @@ void vlad_free(void *object)
       free_list_ptr = index;
       // printf("%x\n",(int) free_list_ptr);
    }
+   merge(index);
 }
 
 
