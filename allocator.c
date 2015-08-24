@@ -129,15 +129,9 @@ void merge(vaddr_t index){
 
 void vlad_init(u_int32_t size)
 {
-   // dummy statements to keep compiler happy
-   // memory = NULL;
-   // free_list_ptr = (vaddr_t)0;
-   // memory_size = 0;
-   // TODO
-   // remove the above when you implement your code
    // printf("0\n"); // debug
    if (memory == NULL){ // if already initialised, do nothing
-      if (size < 512) size = 512; // not sure if working
+      if (size < 512) size = 512;
       size = power2(size); // translate to smallest larger power of 2 // not working properly for anything not a power of 2
       memory = malloc(size); // malloc returns NULL on fail
       // printf("b\n"); // debug
@@ -167,9 +161,6 @@ void vlad_init(u_int32_t size)
 
 void *vlad_malloc(u_int32_t n)
 {
-   // TODO
-   // return NULL; // temporarily
-
    free_header_t *curr = (free_header_t *) itop(free_list_ptr);
    if (curr->magic != MAGIC_FREE){ // or MAGIC_ALLOC too?
       fprintf(stderr, "Memory corruption");
@@ -194,26 +185,6 @@ void *vlad_malloc(u_int32_t n)
       curr = (free_header_t *) itop(curr->next); // move to next region
    }
    if (chosen == NULL) return NULL;
-   // OLD UNFINISHED METHOD:
-   // while (done == 0) {
-   //    if (curr->size < HEADER_SIZE + n){
-   //       curr = itop(curr->next); // region too small, move to next region
-   //    } else {
-   //       if (curr->size < chosen_size){
-   //          chosen = curr; // choose this region
-
-   //       }
-
-   //       // is this right?
-   //       if (itop(curr->next) == curr){ // && curr->prev = curr // only free region
-   //          return NULL;
-   //       }
-   //    }
-   //    if (curr->next == free_list_ptr){
-   //       // reached end of list
-   //       done = 1;
-   //    }
-   // }
 
    // printf("3\n"); // debug
    // NOTE: next and prev are not real pointers but indexes!
@@ -273,7 +244,6 @@ void *vlad_malloc(u_int32_t n)
 
 void vlad_free(void *object)
 {
-   // TODO
    byte *to_free_addr;
    free_header_t *to_free;
    to_free_addr = (void *) object - HEADER_SIZE;
@@ -332,8 +302,6 @@ void vlad_free(void *object)
 
 void vlad_end(void)
 {
-   // TODO
-
    free(memory);
 }
 
@@ -343,12 +311,6 @@ void vlad_end(void)
 
 void vlad_stats(void)
 {
-   // TODO
-   // put whatever code you think will help you
-   // understand Vlad's current state in this function
-   // REMOVE all pfthese statements when your vlad_malloc() is done
-   // printf("vlad_stats() won't work until vlad_malloc() works\n");
-
    free_header_t *curr = (free_header_t *) itop(free_list_ptr);
    while (curr->next != free_list_ptr){
       // printf("%d")
