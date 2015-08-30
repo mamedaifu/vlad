@@ -47,6 +47,10 @@ u_int32_t power2(u_int32_t n){
    u_int32_t rounded;
    int ones = 0;
    u_int32_t i = 1 << 31;
+   if (n >= i){
+      // printf("max\n");
+      return i; // round down when no longer able to round up
+   }
    while (i > 0 && ones < 2){
       if ((n & i) != 0){ // if there is a 1
          ones++;
